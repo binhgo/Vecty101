@@ -21,12 +21,14 @@ func main() {
 
 	page.Title = "Original"
 
+	// go goCount()
+
 	vecty.RenderBody(page)
 }
 
 func goCount() {
 	for {
-		time.Sleep(1 * time.Millisecond)
+		time.Sleep(1 * time.Second)
 		page.Count++
 	}
 }
@@ -39,7 +41,7 @@ type PageView struct {
 	Title string
 
 	areaText string
-	Area     vecty.HTML
+	Area     *vecty.HTML
 }
 
 func (p *PageView) OnRef(event *vecty.Event) {
@@ -55,7 +57,7 @@ func (p *PageView) OnToast(event *vecty.Event) {
 }
 
 func (p *PageView) SetText(event *vecty.Event) {
-	p.areaText = "sas"
+	p.areaText = p.Area.Node().Get("value").String()
 	vecty.Rerender(p)
 }
 
@@ -69,21 +71,41 @@ func (p *PageView) Render() vecty.ComponentOrHTML {
 
 	p.Count++
 
+	go func() {
+		for {
+			time.Sleep(1 * time.Second)
+			p.areaText = time.Now().String()
+			vecty.Rerender(p)
+		}
+	}()
+
+	p.Area = elem.TextArea(
+		vecty.Markup(
+			prop.Value(p.areaText),
+			// prop.For(p.areaText),
+			event.Change(p.OnAreaChanged),
+		),
+		vecty.Text("Text area"),
+	)
+
 	// p.Title = "This is Tittle"
 
 	return elem.Body(
+
+		elem.Label(
+			vecty.Markup(
+				prop.Value(string(p.Count)),
+			),
+			vecty.Text("Mark all as complete"),
+		),
+
+		elem.Break(),
+
 		vecty.Text(p.Title),
 		vecty.Text(strconv.Itoa(p.Count)),
 		elem.Break(),
 
-		elem.TextArea(
-			vecty.Markup(
-				// prop.Value(p.areaText),
-				event.Change(p.OnAreaChanged),
-			),
-			vecty.Text("Text area"),
-		),
-
+		p.Area,
 
 		elem.Break(),
 
@@ -104,6 +126,7 @@ func (p *PageView) Render() vecty.ComponentOrHTML {
 
 		elem.Label(
 			vecty.Markup(
+				// prop.Value(p.areaText),
 				event.DoubleClick(p.OnToast),
 			),
 			vecty.Text("my label"),
